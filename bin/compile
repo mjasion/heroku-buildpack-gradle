@@ -12,7 +12,7 @@ BUILD_DIR=$1
 CACHE_DIR=$2
 ENV_DIR=$3
 
-GRADLE_DIST="gradle-1.0-milestone-5"
+GRADLE_DIST="gradle-1.12"
 GRADLE_TASK="stage"
 
 curl --silent --location http://heroku-jvm-common.s3.amazonaws.com/jvm-buildpack-common.tar.gz | tar xz
@@ -45,9 +45,13 @@ if [ -f $BUILD_DIR/gradlew ] ; then
 else
   if [ ! -d $CACHE_DIR/$GRADLE_DIST ] ; then
     cd $CACHE_DIR
-    GRADLE_URL="http://heroku-jvm-buildpack-gradle.s3.amazonaws.com/$GRADLE_DIST.tar.gz"
+    GRADLE_FILE="$GRADLE_DIST-bin.zip"
+    GRADLE_URL="https://downloads.gradle.org/distributions/$GRADLE_FILE"
     echo -n "-----> Installing $GRADLE_DIST....."
-    curl --silent --location $GRADLE_URL | tar xz
+    curl --silent -O $GRADLE_URL
+    jar xf $GRADLE_FILE
+    rm $GRADLE_FILE
+    chmod +x $GRADLE_DIST/bin/gradle
     echo " done"
   fi
   BUILDCMD="gradle -I $OPT_DIR/init.gradle"
@@ -61,7 +65,6 @@ export PATH=$CACHE_DIR/$GRADLE_DIST/bin:$PATH
  
 # build app
 echo "-----> Building Gradle app..."
-echo "       WARNING: The Gradle buildpack is currently in Beta."
 echo "-----> executing $BUILDCMD"
 
 $BUILDCMD 2>&1 | sed -u 's/^/       /'
